@@ -5,31 +5,15 @@ import java.util.Scanner;
  */
 
 public class ResponsiveUI implements Runnable {
-	private int taskCount;
 	private Task myTask;
 	private static String taskMonitor = "";
 
-	public ResponsiveUI(int taskCount) {
-		this.taskCount = taskCount;
-		this.myTask = null;
+	public ResponsiveUI(Task myTask) {
+		this.myTask = myTask;
 	}
 
 	@Override
 	public synchronized void run() {
-		try {
-			System.out.print("Enter the duration (in ms) of task " + taskCount + ": ");
-			Scanner sc = new Scanner(System.in);
-			int taskDuration = sc.nextInt();
-			myTask = new Task(taskDuration, taskCount);
-			doTask();
-			while(taskMonitor.isEmpty()) {
-				wait();
-			}
-			printFinishedTasks();
-		} catch (InterruptedException ex) {}
-	}
-
-	public void doTask() {
 		try {
 			Thread.sleep(myTask.getTaskDuration());
 			addToTaskMonitor();
@@ -39,22 +23,28 @@ public class ResponsiveUI implements Runnable {
 	public synchronized void addToTaskMonitor() {
 		if(taskMonitor.isEmpty()) {
 			taskMonitor = myTask.getTaskCount();
-			notifyAll();
 		} else {
 			taskMonitor = taskMonitor + ", " + myTask.getTaskCount();
-			notifyAll();
 		}
 	}
 
-	public synchronized void printFinishedTasks() {
+	public static void printFinishedTasks() {
 		System.out.println("Finished tasks: " + taskMonitor);
+		taskMonitor = "";
 	}
 
 	public static void main(String[] args) {
 		for(int i = 0; i < 10; i++) {
-			Runnable r = new ResponsiveUI(i);
+			System.out.print("Enter the duration (in ms) of task " + i + ": ");
+			Scanner sc = new Scanner(System.in);
+			int taskDuration = sc.nextInt();
+			Task myTask = new Task(taskDuration, i);
+			Runnable r = new ResponsiveUI(myTask);
 			Thread t = new Thread(r);
 			t.start();
+			if(!ResponsiveUI.taskMonitor.isEmpty()) {
+				printFinishedTasks();
+			}
 		}
 	}
 }
